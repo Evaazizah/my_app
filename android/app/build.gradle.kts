@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.nexora_one" // Namespace aplikasi Anda
+    namespace = "com.example.trenix" // Namespace aplikasi Anda
     compileSdk = 35 // Mengatur compileSdk ke versi 35, sesuai kebutuhan plugin
 
     ndkVersion = "27.0.12077973" // Versi NDK yang Anda tentukan
 
     defaultConfig {
-        applicationId = "com.example.nexora_one" // ID aplikasi Anda
+        applicationId = "com.example.trenix" // ID aplikasi Anda
         minSdk = 21 // Versi Android minimum yang didukung
         targetSdk = 35 // Versi Android target (sesuai compileSdk)
         versionCode = 1 // Kode versi aplikasi
