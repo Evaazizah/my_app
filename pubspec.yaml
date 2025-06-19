@@ -46,6 +46,7 @@ dependencies:
   tesseract_ocr: ^0.4.1
   shared_preferences: ^2.2.0
   flutter_lints: ^5.0.0
+  lottie: ^2.7.0
 
 dev_dependencies:
   flutter_test:
@@ -56,7 +57,7 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/icons/TRENIX.jpg"
+  image_path: "assets/icons/TRENIX.png"
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -78,7 +79,8 @@ flutter:
     - assets/icons/onboarding1.jpg
     - assets/icons/onboarding2.jpg
     - assets/icons/onboarding3.jpg
-    - assets/icons/TRENIX.jpg
+    - assets/icons/Logo.json
+    - assets/icons/Loading.json
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

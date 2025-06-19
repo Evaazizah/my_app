@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -9,59 +10,72 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  int _currentPage = 0;
+  Timer? _timer;
+
   @override
   void initState() {
     super.initState();
 
-    Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, '/onboarding');
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      setState(() {
+        _currentPage++;
+        if (_currentPage >= 4) {
+          _timer?.cancel();
+          Navigator.pushReplacementNamed(context, '/onboarding');
+        }
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color.fromRGBO(255, 255, 255, 1),
       body: SafeArea(
+        bottom: false,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset('assets/icons/TRENIX.jpg', height: 120),
-              const SizedBox(height: 30),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Lottie.asset(
+                      'assets/icons/Logo.json',
+                      height: 120,
+                      width: 120,
+                    ),
+                    const SizedBox(height: 30),
 
-              const Text(
-                'TRENIX',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  letterSpacing: 2,
+                    const Text(
+                      'TRENIX',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    const Text(
+                      'One App. Smarter Life',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
 
-              const Text(
-                'One App. Smarter Life',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-
-              const SizedBox(height: 100),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(4, (index) {
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: index == 0 ? Colors.black : Colors.grey[300],
-                      shape: BoxShape.circle,
-                    ),
-                  );
-                }),
-              ),
+              const Spacer(),
+              Lottie.asset('assets/icons/Loading.json', height: 50),
+              const SizedBox(height: 20),
             ],
           ),
         ),
