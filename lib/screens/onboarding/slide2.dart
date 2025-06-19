@@ -10,15 +10,12 @@ class Slide2 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Background image
         Positioned.fill(
           child: Image.asset('assets/icons/onboarding2.jpg', fit: BoxFit.cover),
         ),
 
-        // Overlay gelap transparan
         Positioned.fill(child: Container(color: Colors.black.withOpacity(0.4))),
 
-        // Konten teks & tombol
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -69,7 +66,6 @@ class Slide2 extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Tombol Back
                     SizedBox(
                       width: 100,
                       height: 40,
@@ -85,14 +81,13 @@ class Slide2 extends StatelessWidget {
                         child: const Text(
                           'Back',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ),
 
-                    // Tombol Next
                     SizedBox(
                       width: 100,
                       height: 40,
@@ -108,7 +103,7 @@ class Slide2 extends StatelessWidget {
                         child: const Text(
                           'Next',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
