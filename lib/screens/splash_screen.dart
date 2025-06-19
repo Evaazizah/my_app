@@ -39,38 +39,37 @@ class _SplashScreenState extends State<SplashScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Lottie.asset(
-                      'assets/icons/Logo.json',
-                      height: 120,
-                      width: 120,
-                    ),
-                    const SizedBox(height: 30),
+              const SizedBox(height: 300),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Lottie.asset(
+                    'assets/icons/Logo.json',
+                    height: 150,
+                    width: 150,
+                  ),
+                  const SizedBox(height: 30),
 
-                    const Text(
-                      'TRENIX',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black,
-                        letterSpacing: 1,
-                      ),
+                  const Text(
+                    'TRENIX',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
+                      letterSpacing: 1,
                     ),
-                    const SizedBox(height: 10),
+                  ),
+                  const SizedBox(height: 10),
 
-                    const Text(
-                      'One App. Smarter Life',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                        letterSpacing: 0.5,
-                      ),
+                  const Text(
+                    'One App. Smarter Life',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                      letterSpacing: 0.5,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
 
               const Spacer(),
