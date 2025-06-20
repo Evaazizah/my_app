@@ -37,6 +37,7 @@ dependencies:
   provider: ^6.1.5
   firebase_core: ^2.0.0
   firebase_auth: ^4.0.0
+  google_sign_in: ^6.2.1
   cloud_firestore: ^4.0.0
   google_maps_flutter: ^2.1.10
   geolocator: ^10.0.0

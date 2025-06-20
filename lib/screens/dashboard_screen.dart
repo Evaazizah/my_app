@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -9,20 +10,39 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
+  String userName = '';
 
   final List<Widget> _pages = [
-    const MainDashboard(),
-    Center(child: Text('Statistics')),
-    Center(child: Text('Messages')),
-    Center(child: Text('Profile')),
+    const Placeholder(), // Akan diganti oleh MainDashboard
+    const Center(child: Text('Statistics')),
+    const Center(child: Text('Messages')),
+    const Center(child: Text('Profile')),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    loadUser();
+  }
+
+  Future<void> loadUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('email') ?? '';
+    setState(() {
+      userName = email.split('@').first;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFD1E3FF),
-      body: SafeArea(child: _pages[_selectedIndex]),
-
+      body: SafeArea(
+        child:
+            _selectedIndex == 0
+                ? MainDashboard(userName: userName)
+                : _pages[_selectedIndex],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.black,
@@ -46,7 +66,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 class MainDashboard extends StatelessWidget {
-  const MainDashboard({super.key});
+  final String userName;
+  const MainDashboard({super.key, required this.userName});
 
   @override
   Widget build(BuildContext context) {
@@ -71,20 +92,17 @@ class MainDashboard extends StatelessWidget {
             ],
           ),
         ),
-
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: const Align(
+          child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Halo, [User]',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              'Halo, $userName 👋',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
           ),
         ),
-
         const SizedBox(height: 20),
-
         Expanded(
           child: GridView.count(
             crossAxisCount: 2,
@@ -92,10 +110,30 @@ class MainDashboard extends StatelessWidget {
             mainAxisSpacing: 20,
             crossAxisSpacing: 20,
             children: [
-              _buildMenuItem(Icons.note, 'TaskRoom'),
-              _buildMenuItem(Icons.phone_android, 'Smart Finance'),
-              _buildMenuItem(Icons.local_shipping, 'Track & Alert'),
-              _buildMenuItem(Icons.cloud, 'Cuaca'),
+              _buildMenuItem(
+                context,
+                Icons.note,
+                'TaskRoom',
+                () => Navigator.pushNamed(context, '/todo'),
+              ),
+              _buildMenuItem(
+                context,
+                Icons.phone_android,
+                'Smart Finance',
+                () => Navigator.pushNamed(context, '/finance'),
+              ),
+              _buildMenuItem(
+                context,
+                Icons.local_shipping,
+                'Track & Alert',
+                () => Navigator.pushNamed(context, '/track'),
+              ),
+              _buildMenuItem(
+                context,
+                Icons.cloud,
+                'Cuaca',
+                () => Navigator.pushNamed(context, '/weather'),
+              ),
             ],
           ),
         ),
@@ -103,9 +141,14 @@ class MainDashboard extends StatelessWidget {
     );
   }
 
-  static Widget _buildMenuItem(IconData icon, String title) {
+  static Widget _buildMenuItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
