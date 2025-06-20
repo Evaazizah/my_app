@@ -2,7 +2,9 @@ plugins {
     id("com.android.application") // Plugin inti untuk aplikasi Android
     id("kotlin-android")          // Plugin untuk dukungan Kotlin
     id("dev.flutter.flutter-gradle-plugin") // Plugin khusus untuk Flutter
+    id("com.google.gms.google-services")
 }
+
 
 android {
     namespace = "com.example.trenix" // Namespace aplikasi Anda
