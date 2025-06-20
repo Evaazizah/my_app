@@ -14,8 +14,9 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              const SizedBox(height: 100),
               Lottie.asset('assets/icons/Logo.json', height: 200, width: 200),
-              const SizedBox(height: 16),
+              const SizedBox(height: 50),
 
               const Text(
                 'TRENIX',
@@ -26,14 +27,14 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
 
               const Text(
                 'Welcome',
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 25),
 
               TextField(
                 decoration: InputDecoration(
@@ -95,7 +96,9 @@ class LoginScreen extends StatelessWidget {
                   const Text("or"),
                   const SizedBox(width: 10),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/dashboard');
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B82F6),
                       padding: const EdgeInsets.symmetric(horizontal: 14),
