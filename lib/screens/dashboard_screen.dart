@@ -13,7 +13,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String userName = '';
 
   final List<Widget> _pages = [
-    const Placeholder(), // Akan diganti oleh MainDashboard
+    const Placeholder(),
     const Center(child: Text('Statistics')),
     const Center(child: Text('Messages')),
     const Center(child: Text('Profile')),
@@ -80,13 +80,13 @@ class MainDashboard extends StatelessWidget {
             children: const [
               Text(
                 'TRENIX',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
               ),
               Row(
                 children: [
                   Icon(Icons.notifications),
-                  SizedBox(width: 12),
-                  Icon(Icons.settings),
+                  SizedBox(width: 20),
+                  Icon(Icons.light_mode),
                 ],
               ),
             ],
@@ -98,11 +98,11 @@ class MainDashboard extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               'Halo, $userName 👋',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 170),
         Expanded(
           child: GridView.count(
             crossAxisCount: 2,
