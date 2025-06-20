@@ -21,7 +21,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.ease,
       );
     } else {
-      Navigator.pushReplacementNamed(context, '/login_register');
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
