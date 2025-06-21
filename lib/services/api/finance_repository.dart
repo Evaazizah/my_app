@@ -21,7 +21,7 @@ class FinanceRepository {
     required String description,
   }) async {
     final transaction = Transaction(
-      id: '', // Server will generate ID
+      id: '', // server-generated
       type: type,
       amount: amount,
       category: category,

@@ -11,7 +11,7 @@ class DioClient {
   DioClient._internal() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'https://your-api-base-url.com/api/v1',
+        baseUrl: 'https://api.trenix.my.id',
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
         headers: {
@@ -42,7 +42,6 @@ class DioClient {
 
   factory DioClient() => _instance;
 
-  // Optional: Add your API token dynamically
   void setAuthToken(String token) {
     dio.options.headers['Authorization'] = 'Bearer $token';
   }
