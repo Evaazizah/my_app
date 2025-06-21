@@ -27,7 +27,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "11" // Target JVM untuk Kotlin ke Java 11
+        jvmTarget = "17" // Target JVM untuk Kotlin ke Java 11
     }
 
     buildTypes {
