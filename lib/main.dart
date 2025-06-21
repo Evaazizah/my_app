@@ -9,9 +9,9 @@ import 'screens/finance_screen.dart';
 import 'screens/track_screen.dart';
 import 'screens/weather_screen.dart';
 import 'screens/signup_screen.dart';
+import 'screens/ocr_scan_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider extends ChangeNotifier {
@@ -110,6 +110,7 @@ class MyApp extends StatelessWidget {
         '/track': (context) => const TrackScreen(),
         '/weather': (context) => const WeatherScreen(),
         '/signup': (context) => const SignupScreen(),
+        '/scan-nota': (context) => const OCRScanScreen(),
       },
     );
   }

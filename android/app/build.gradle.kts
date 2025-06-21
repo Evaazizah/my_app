@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.trenix" // ID aplikasi Anda
-        minSdk = 21 // Versi Android minimum yang didukung
+        minSdk = 23 // Versi Android minimum yang didukung
         targetSdk = 35 // Versi Android target (sesuai compileSdk)
         versionCode = 1 // Kode versi aplikasi
         versionName = "1.0" // Nama versi aplikasi

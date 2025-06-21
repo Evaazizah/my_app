@@ -1,14 +1,12 @@
-// lib/screens/finance_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:uuid/uuid.dart';
-import 'package:image_picker/image_picker.dart'; // Import ini
-import 'package:http/http.dart' as http; // Import ini
-import 'dart:io'; // Untuk File
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:google_ml_kit/google_ml_kit.dart';
 
-// --- Model Data untuk Transaksi Keuangan (Tidak Berubah) ---
 enum TransactionType { income, expense }
 
 class FinancialTransaction {
@@ -18,6 +16,7 @@ class FinancialTransaction {
   final TransactionType type;
   final DateTime date;
   final String? description;
+  final String? source;
 
   FinancialTransaction({
     required this.id,
@@ -26,6 +25,7 @@ class FinancialTransaction {
     required this.type,
     required this.date,
     this.description,
+    this.source,
   });
 
   factory FinancialTransaction.fromJson(Map<String, dynamic> json) {
@@ -38,6 +38,7 @@ class FinancialTransaction {
       ),
       date: DateTime.parse(json['date'] as String),
       description: json['description'] as String?,
+      source: json['source'] as String?,
     );
   }
 
@@ -49,11 +50,11 @@ class FinancialTransaction {
       'type': type.name,
       'date': date.toIso8601String(),
       'description': description,
+      'source': source,
     };
   }
 }
 
-// --- Halaman Utama Finance ---
 class FinanceScreen extends StatefulWidget {
   const FinanceScreen({super.key});
 
@@ -65,12 +66,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
   List<FinancialTransaction> _transactions = [];
   final Uuid _uuid = Uuid();
   final ImagePicker _picker = ImagePicker();
-
-  // GANTI DENGAN API KEY GOOGLE CLOUD VISION API KAMU!!!
-  // Cara paling aman adalah menyimpannya di file .env atau build config,
-  // tapi untuk contoh cepat, kita taruh di sini. PASTIKAN UNTUK MEMBATASI API KEY DI GOOGLE CLOUD.
-  final String _googleVisionApiKey =
-      'YOUR_GOOGLE_CLOUD_VISION_API_KEY'; // <--- GANTI INI!
 
   @override
   void initState() {
@@ -121,10 +116,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
     ).showSnackBar(const SnackBar(content: Text('Transaksi dihapus!')));
   }
 
-  // --- Fungsi untuk Scan Nota ---
   Future<void> _scanReceipt() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-
     if (image != null) {
       ScaffoldMessenger.of(
         context,
@@ -142,77 +135,34 @@ class _FinanceScreenState extends State<FinanceScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error saat memproses OCR: $e')));
-        print('Error during OCR: $e');
       }
     }
   }
 
   Future<String?> _performOcr(File imageFile) async {
-    if (_googleVisionApiKey == 'YOUR_GOOGLE_CLOUD_VISION_API_KEY') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Peringatan: API Key Google Vision belum diset!'),
-        ),
+    final inputImage = InputImage.fromFile(imageFile);
+    final textRecognizer = GoogleMlKit.vision.textRecognizer();
+    try {
+      final RecognizedText recognizedText = await textRecognizer.processImage(
+        inputImage,
       );
+      await textRecognizer.close();
+      return recognizedText.text;
+    } catch (e) {
       return null;
     }
-
-    final bytes = await imageFile.readAsBytes();
-    final base64Image = base64Encode(bytes);
-
-    final response = await http.post(
-      Uri.parse(
-        'https://vision.googleapis.com/v1/images:annotate?key=$_googleVisionApiKey',
-      ),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'requests': [
-          {
-            'image': {'content': base64Image},
-            'features': [
-              {'type': 'TEXT_DETECTION'},
-            ],
-          },
-        ],
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['responses'] != null && data['responses'].isNotEmpty) {
-        return data['responses'][0]['fullTextAnnotation']['text'];
-      }
-    } else {
-      print(
-        'Google Vision API Error: ${response.statusCode} - ${response.body}',
-      );
-    }
-    return null;
   }
 
-  // --- Parsing Teks OCR & Menampilkan Dialog Konfirmasi ---
   void _processOcrText(String ocrText) {
-    // Ini adalah bagian PALING KRITIS dan SULIT.
-    // Parsing teks dari struk itu sangat bervariasi formatnya.
-    // Contoh sederhana: cari "Total" atau "Jumlah" dan angka setelahnya.
-    // Untuk kasus nyata, Anda perlu regex atau ML model yang lebih canggih.
-
     String titleGuess = 'Pembelian dari Nota';
     double? amountGuess;
-    TransactionType typeGuess =
-        TransactionType.expense; // Nota biasanya pengeluaran
-
-    // Logika parsing sederhana (bisa sangat bervariasi tergantung format nota)
+    TransactionType typeGuess = TransactionType.expense;
     RegExp totalRegex = RegExp(
       r'TOTAL\s*Rp?\s*(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)',
       caseSensitive: false,
     );
     RegExp totalRegex2 = RegExp(
       r'Jumlah\s*Rp?\s*(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)',
-      caseSensitive: false,
-    );
-    RegExp itemRegex = RegExp(
-      r'(\d+)\s+x\s+(.+?)\s+Rp?\s*(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)',
       caseSensitive: false,
     );
 
@@ -226,13 +176,12 @@ class _FinanceScreenState extends State<FinanceScreen> {
       amountGuess = double.tryParse(amountStr);
     }
 
-    // Coba ambil beberapa item sebagai judul
     List<String> itemsFound = [];
     for (var line in ocrText.split('\n')) {
       if (itemsFound.length < 3 &&
           line.length > 5 &&
           !line.contains('Rp') &&
-          !line.contains('Total')) {
+          !line.toLowerCase().contains('total')) {
         itemsFound.add(line.trim());
       }
     }
@@ -242,99 +191,67 @@ class _FinanceScreenState extends State<FinanceScreen> {
         titleGuess = titleGuess.substring(0, 47) + '...';
     }
 
-    // Tampilkan dialog konfirmasi kepada pengguna
+    final TextEditingController _titleController = TextEditingController(
+      text: titleGuess,
+    );
+    final TextEditingController _amountController = TextEditingController(
+      text: amountGuess?.toStringAsFixed(2) ?? '',
+    );
+    final TextEditingController _descriptionController = TextEditingController(
+      text: 'Scan dari nota:\n$ocrText',
+    );
+    TransactionType _selectedType = typeGuess;
+    DateTime _selectedDate = DateTime.now();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        final TextEditingController _titleController = TextEditingController(
-          text: titleGuess,
-        );
-        final TextEditingController _amountController = TextEditingController(
-          text: amountGuess?.toStringAsFixed(2) ?? '',
-        );
-        final TextEditingController _descriptionController =
-            TextEditingController(text: 'Scan dari nota:\n$ocrText');
-        TransactionType _selectedType = typeGuess;
-        DateTime _selectedDate = DateTime.now();
-
         return AlertDialog(
-          title: Text(
-            'Konfirmasi Transaksi dari Nota',
-            style: GoogleFonts.poppins(),
-          ),
+          title: Text('Konfirmasi Transaksi dari Nota'),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
               return SingleChildScrollView(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     TextFormField(
                       controller: _titleController,
-                      decoration: InputDecoration(
-                        labelText: 'Nama Transaksi',
-                        labelStyle: GoogleFonts.poppins(),
-                      ),
-                      validator:
-                          (value) =>
-                              value!.isEmpty ? 'Tidak boleh kosong' : null,
+                      decoration: InputDecoration(labelText: 'Nama Transaksi'),
                     ),
                     TextFormField(
                       controller: _amountController,
-                      decoration: InputDecoration(
-                        labelText: 'Jumlah (Rp)',
-                        labelStyle: GoogleFonts.poppins(),
-                      ),
+                      decoration: InputDecoration(labelText: 'Jumlah (Rp)'),
                       keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null ||
-                            value.isEmpty ||
-                            double.tryParse(value) == null) {
-                          return 'Masukkan angka valid';
-                        }
-                        return null;
-                      },
                     ),
                     TextFormField(
                       controller: _descriptionController,
-                      decoration: InputDecoration(
-                        labelText: 'Deskripsi',
-                        labelStyle: GoogleFonts.poppins(),
-                      ),
+                      decoration: InputDecoration(labelText: 'Deskripsi'),
                       maxLines: 4,
                     ),
-                    const SizedBox(height: 10),
                     DropdownButtonFormField<TransactionType>(
                       value: _selectedType,
-                      decoration: InputDecoration(
-                        labelText: 'Jenis Transaksi',
-                        labelStyle: GoogleFonts.poppins(),
-                      ),
+                      decoration: InputDecoration(labelText: 'Jenis Transaksi'),
                       items:
-                          TransactionType.values.map((type) {
-                            return DropdownMenuItem(
-                              value: type,
-                              child: Text(
-                                type == TransactionType.income
-                                    ? 'Pemasukan'
-                                    : 'Pengeluaran',
-                                style: GoogleFonts.poppins(),
-                              ),
-                            );
-                          }).toList(),
+                          TransactionType.values
+                              .map(
+                                (type) => DropdownMenuItem(
+                                  value: type,
+                                  child: Text(
+                                    type == TransactionType.income
+                                        ? 'Pemasukan'
+                                        : 'Pengeluaran',
+                                  ),
+                                ),
+                              )
+                              .toList(),
                       onChanged: (type) {
-                        if (type != null) {
-                          setState(() {
-                            _selectedType = type;
-                          });
-                        }
+                        if (type != null) setState(() => _selectedType = type);
                       },
                     ),
                     ListTile(
                       title: Text(
                         'Tanggal: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                        style: GoogleFonts.poppins(),
                       ),
-                      trailing: const Icon(Icons.calendar_today),
+                      trailing: Icon(Icons.calendar_today),
                       onTap: () async {
                         final DateTime? picked = await showDatePicker(
                           context: context,
@@ -342,31 +259,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
                           firstDate: DateTime(2000),
                           lastDate: DateTime(2101),
                         );
-                        if (picked != null && picked != _selectedDate) {
-                          setState(() {
-                            _selectedDate = picked;
-                          });
-                        }
+                        if (picked != null)
+                          setState(() => _selectedDate = picked);
                       },
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Teks Asli dari Nota:',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                    ),
-                    Container(
-                      constraints: BoxConstraints(maxHeight: 150),
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: SingleChildScrollView(
-                        child: Text(
-                          ocrText,
-                          style: GoogleFonts.poppins(fontSize: 12),
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -376,11 +271,10 @@ class _FinanceScreenState extends State<FinanceScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Batal', style: GoogleFonts.poppins()),
+              child: Text('Batal'),
             ),
             ElevatedButton(
               onPressed: () {
-                // Validasi lagi input sebelum menambahkan
                 if (_titleController.text.isNotEmpty &&
                     double.tryParse(_amountController.text) != null) {
                   final newTransaction = FinancialTransaction(
@@ -390,16 +284,13 @@ class _FinanceScreenState extends State<FinanceScreen> {
                     type: _selectedType,
                     date: _selectedDate,
                     description: _descriptionController.text,
+                    source: 'ocr',
                   );
                   _addTransaction(newTransaction);
                   Navigator.pop(context);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Judul atau jumlah tidak valid.')),
-                  );
                 }
               },
-              child: Text('Simpan', style: GoogleFonts.poppins()),
+              child: Text('Simpan'),
             ),
           ],
         );
@@ -407,148 +298,98 @@ class _FinanceScreenState extends State<FinanceScreen> {
     );
   }
 
-  // --- Dialog untuk Menambahkan Transaksi Baru (tidak berubah banyak, hanya penyesuaian sedikit) ---
+  double _getTotalFromOCR() {
+    return _transactions
+        .where((t) => t.source == 'ocr' && t.type == TransactionType.expense)
+        .fold(0.0, (sum, t) => sum + t.amount);
+  }
+
   void _showAddTransactionDialog() {
-    final _formKey = GlobalKey<FormState>();
     final TextEditingController _titleController = TextEditingController();
     final TextEditingController _amountController = TextEditingController();
     final TextEditingController _descriptionController =
         TextEditingController();
-    TransactionType _selectedType = TransactionType.expense; // Default expense
+    TransactionType _selectedType = TransactionType.expense;
     DateTime _selectedDate = DateTime.now();
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (context) {
         return AlertDialog(
-          title: Text('Tambah Transaksi Baru', style: GoogleFonts.poppins()),
-          content: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: InputDecoration(
-                          labelText: 'Nama Transaksi',
-                          labelStyle: GoogleFonts.poppins(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Nama transaksi tidak boleh kosong';
-                          }
-                          return null;
-                        },
-                      ),
-                      TextFormField(
-                        controller: _amountController,
-                        decoration: InputDecoration(
-                          labelText: 'Jumlah (Rp)',
-                          labelStyle: GoogleFonts.poppins(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Jumlah tidak boleh kosong';
-                          }
-                          if (double.tryParse(value) == null) {
-                            return 'Masukkan angka yang valid';
-                          }
-                          if (double.parse(value) <= 0) {
-                            return 'Jumlah harus lebih dari 0';
-                          }
-                          return null;
-                        },
-                      ),
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration: InputDecoration(
-                          labelText: 'Deskripsi (Opsional)',
-                          labelStyle: GoogleFonts.poppins(),
-                        ),
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 10),
-                      DropdownButtonFormField<TransactionType>(
-                        value: _selectedType,
-                        decoration: InputDecoration(
-                          labelText: 'Jenis Transaksi',
-                          labelStyle: GoogleFonts.poppins(),
-                        ),
-                        items:
-                            TransactionType.values.map((type) {
-                              return DropdownMenuItem(
-                                value: type,
-                                child: Text(
-                                  type == TransactionType.income
-                                      ? 'Pemasukan'
-                                      : 'Pengeluaran',
-                                  style: GoogleFonts.poppins(),
-                                ),
-                              );
-                            }).toList(),
-                        onChanged: (type) {
-                          if (type != null) {
-                            setState(() {
-                              _selectedType = type;
-                            });
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      ListTile(
-                        title: Text(
-                          'Tanggal: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                          style: GoogleFonts.poppins(),
-                        ),
-                        trailing: const Icon(Icons.calendar_today),
-                        onTap: () async {
-                          final DateTime? picked = await showDatePicker(
-                            context: context,
-                            initialDate: _selectedDate,
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2101),
-                          );
-                          if (picked != null && picked != _selectedDate) {
-                            setState(() {
-                              _selectedDate = picked;
-                            });
-                          }
-                        },
-                      ),
-                    ],
+          title: Text('Tambah Transaksi Manual'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: _titleController,
+                  decoration: InputDecoration(labelText: 'Nama Transaksi'),
+                ),
+                TextField(
+                  controller: _amountController,
+                  decoration: InputDecoration(labelText: 'Jumlah (Rp)'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(labelText: 'Deskripsi'),
+                ),
+                DropdownButton<TransactionType>(
+                  value: _selectedType,
+                  items:
+                      TransactionType.values
+                          .map(
+                            (type) => DropdownMenuItem(
+                              value: type,
+                              child: Text(
+                                type == TransactionType.income
+                                    ? 'Pemasukan'
+                                    : 'Pengeluaran',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (value) => setState(() => _selectedType = value!),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _selectedDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) setState(() => _selectedDate = picked);
+                  },
+                  child: Text(
+                    'Tanggal: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
                   ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Batal', style: GoogleFonts.poppins()),
+              child: Text('Batal'),
             ),
             ElevatedButton(
               onPressed: () {
-                if (_formKey.currentState!.validate()) {
+                if (_titleController.text.isNotEmpty &&
+                    double.tryParse(_amountController.text) != null) {
                   final newTransaction = FinancialTransaction(
                     id: _uuid.v4(),
                     title: _titleController.text,
                     amount: double.parse(_amountController.text),
                     type: _selectedType,
                     date: _selectedDate,
-                    description:
-                        _descriptionController.text.isNotEmpty
-                            ? _descriptionController.text
-                            : null,
+                    description: _descriptionController.text,
+                    source: 'manual',
                   );
                   _addTransaction(newTransaction);
                   Navigator.pop(context);
                 }
               },
-              child: Text('Tambah', style: GoogleFonts.poppins()),
+              child: Text('Simpan'),
             ),
           ],
         );
@@ -556,7 +397,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
     );
   }
 
-  // --- UI Utama Halaman Finance (Ditambah tombol Scan Nota) ---
   @override
   Widget build(BuildContext context) {
     final double totalIncome = _transactions
@@ -569,16 +409,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Finance & Keuangan',
-          style: TextStyle(fontFamily: GoogleFonts.poppins().fontFamily),
-        ),
+        title: Text('Finance & Keuangan'),
         actions: [
-          IconButton(
-            icon: Icon(Icons.camera_alt), // Icon untuk scan nota
-            onPressed: _scanReceipt, // Panggil fungsi scan nota
-            tooltip: 'Scan Nota',
-          ),
+          IconButton(icon: Icon(Icons.camera_alt), onPressed: _scanReceipt),
         ],
       ),
       body: Column(
@@ -597,67 +430,52 @@ class _FinanceScreenState extends State<FinanceScreen> {
                   children: [
                     Text(
                       'Ringkasan Keuangan',
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: GoogleFonts.poppins(fontSize: 20),
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Total Pemasukan:',
-                          style: GoogleFonts.poppins(fontSize: 16),
-                        ),
+                        Text('Total Pemasukan:'),
                         Text(
                           'Rp ${totalIncome.toStringAsFixed(2)}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
+                          style: TextStyle(color: Colors.green),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 5),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Total Pengeluaran:',
-                          style: GoogleFonts.poppins(fontSize: 16),
-                        ),
+                        Text('Total Pengeluaran:'),
                         Text(
                           'Rp ${totalExpense.toStringAsFixed(2)}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red,
-                          ),
+                          style: TextStyle(color: Colors.red),
                         ),
                       ],
                     ),
-                    const Divider(height: 20, thickness: 1),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Total dari Scan Nota:'),
+                        Text(
+                          'Rp ${_getTotalFromOCR().toStringAsFixed(2)}',
+                          style: TextStyle(color: Colors.purple),
+                        ),
+                      ],
+                    ),
+                    Divider(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Saldo Bersih:',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: GoogleFonts.poppins(fontSize: 16),
                         ),
                         Text(
                           'Rp ${balance.toStringAsFixed(2)}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color:
-                                balance >= 0
-                                    ? Colors.blueAccent
-                                    : Colors.orange,
+                            color: balance >= 0 ? Colors.blue : Colors.orange,
                           ),
                         ),
                       ],
@@ -670,81 +488,39 @@ class _FinanceScreenState extends State<FinanceScreen> {
           Expanded(
             child:
                 _transactions.isEmpty
-                    ? Center(
-                      child: Text(
-                        'Belum ada transaksi. Tambahkan satu atau scan nota!',
-                        style: GoogleFonts.poppins(),
-                      ),
-                    )
+                    ? Center(child: Text('Belum ada transaksi'))
                     : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
                       itemCount: _transactions.length,
                       itemBuilder: (context, index) {
-                        final transaction = _transactions[index];
+                        final t = _transactions[index];
                         return Card(
-                          margin: const EdgeInsets.only(bottom: 12.0),
+                          margin: EdgeInsets.only(bottom: 12.0),
                           elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.0),
                           ),
                           child: ListTile(
                             leading: Icon(
-                              transaction.type == TransactionType.income
+                              t.type == TransactionType.income
                                   ? Icons.arrow_downward
                                   : Icons.arrow_upward,
                               color:
-                                  transaction.type == TransactionType.income
+                                  t.type == TransactionType.income
                                       ? Colors.green
                                       : Colors.red,
                             ),
-                            title: Text(
-                              transaction.title,
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  transaction.description ?? 'Tanpa deskripsi',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: Colors.grey[700],
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  '${transaction.date.day}/${transaction.date.month}/${transaction.date.year}',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
+                            title: Text(t.title),
+                            subtitle: Text(
+                              '${t.description ?? ''}\n${t.date.day}/${t.date.month}/${t.date.year}',
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  'Rp ${transaction.amount.toStringAsFixed(2)}',
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.bold,
-                                    color:
-                                        transaction.type ==
-                                                TransactionType.income
-                                            ? Colors.green
-                                            : Colors.red,
-                                  ),
-                                ),
+                                Text('Rp ${t.amount.toStringAsFixed(2)}'),
                                 IconButton(
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.grey,
-                                  ),
-                                  onPressed:
-                                      () => _deleteTransaction(transaction.id),
+                                  icon: Icon(Icons.delete),
+                                  onPressed: () => _deleteTransaction(t.id),
                                 ),
                               ],
                             ),
@@ -757,7 +533,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTransactionDialog,
-        child: const Icon(Icons.add),
+        child: Icon(Icons.add),
       ),
     );
   }
