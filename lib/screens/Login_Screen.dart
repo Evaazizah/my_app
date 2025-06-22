@@ -20,8 +20,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (emailController.text == savedEmail &&
         passwordController.text == savedPassword) {
+      // ignore: use_build_context_synchronously
       Navigator.pushReplacementNamed(context, '/dashboard');
     } else {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Email atau Password salah!')),
       );
@@ -60,6 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     hintText: 'Email Address',
                     filled: true,
+                    // ignore: deprecated_member_use
                     fillColor: Colors.white.withOpacity(0.5),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -74,6 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     hintText: 'Password',
                     filled: true,
+                    // ignore: deprecated_member_use
                     fillColor: Colors.white.withOpacity(0.5),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),

@@ -13,6 +13,7 @@ class Slide3 extends StatelessWidget {
           child: Image.asset('assets/icons/onboarding3.jpg', fit: BoxFit.cover),
         ),
 
+        // ignore: deprecated_member_use
         Positioned.fill(child: Container(color: Colors.black.withOpacity(0.4))),
 
         SafeArea(
@@ -69,6 +70,7 @@ class Slide3 extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: onGetStarted,
                     style: ElevatedButton.styleFrom(
+                      // ignore: deprecated_member_use
                       backgroundColor: Colors.white.withOpacity(0.8),
                       foregroundColor: Colors.black,
                       shape: RoundedRectangleBorder(

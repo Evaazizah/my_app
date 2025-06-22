@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
-import 'screens/LoginScreen.dart';
+import 'screens/Login_Screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/forgot_password.dart';
 import 'screens/todo_screen.dart';
@@ -44,10 +45,12 @@ class ThemeProvider extends ChangeNotifier {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  final logger = Logger();
+
   try {
     await Firebase.initializeApp();
   } catch (e) {
-    print('Firebase init failed: $e');
+    logger.e('Firebase init failed: $e');
   }
 
   runApp(const MyApp());

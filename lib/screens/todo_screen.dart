@@ -429,10 +429,10 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
   }
 
   void _showAddTodoDialog(BuildContext context) {
-    final TextEditingController _titleController = TextEditingController();
-    final TextEditingController _descriptionController = TextEditingController();
-    DateTime? _selectedDueDate;
-    final _formKey = GlobalKey<FormState>();
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+    DateTime? selectedDueDate;
+    final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
@@ -442,13 +442,13 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
               return Form(
-                key: _formKey,
+                key: formKey,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextFormField(
-                        controller: _titleController,
+                        controller: titleController,
                         decoration: const InputDecoration(labelText: 'Judul Tugas'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -458,26 +458,26 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
                         },
                       ),
                       TextFormField(
-                        controller: _descriptionController,
+                        controller: descriptionController,
                         decoration: const InputDecoration(labelText: 'Deskripsi'),
                         maxLines: 3,
                       ),
                       const SizedBox(height: 10),
                       ListTile(
-                        title: Text(_selectedDueDate == null
+                        title: Text(selectedDueDate == null
                             ? 'Pilih Jatuh Tempo'
-                            : 'Jatuh Tempo: ${_selectedDueDate!.day}/${_selectedDueDate!.month}/${_selectedDueDate!.year}'),
+                            : 'Jatuh Tempo: ${selectedDueDate!.day}/${selectedDueDate!.month}/${selectedDueDate!.year}'),
                         trailing: const Icon(Icons.calendar_today),
                         onTap: () async {
                           final DateTime? pickedDate = await showDatePicker(
                             context: context,
-                            initialDate: _selectedDueDate ?? DateTime.now(),
+                            initialDate: selectedDueDate ?? DateTime.now(),
                             firstDate: DateTime.now(),
                             lastDate: DateTime(2101),
                           );
-                          if (pickedDate != null && pickedDate != _selectedDueDate) {
+                          if (pickedDate != null && pickedDate != selectedDueDate) {
                             setState(() {
-                              _selectedDueDate = pickedDate;
+                              selectedDueDate = pickedDate;
                             });
                           }
                         },
@@ -498,13 +498,13 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
             ElevatedButton(
               child: const Text('Tambah'),
               onPressed: () {
-                if (_formKey.currentState!.validate()) {
+                if (formKey.currentState!.validate()) {
                   final newTodo = Todo(
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    title: _titleController.text,
-                    description: _descriptionController.text,
+                    title: titleController.text,
+                    description: descriptionController.text,
                     isCompleted: false,
-                    dueDate: _selectedDueDate,
+                    dueDate: selectedDueDate,
                     creationDate: DateTime.now(),
                   );
                   _addTodo(newTodo);
@@ -519,13 +519,13 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
   }
 
   void _showAddClassScheduleDialog(BuildContext context) {
-    final TextEditingController _subjectController = TextEditingController();
-    final TextEditingController _roomController = TextEditingController();
-    final TextEditingController _teacherController = TextEditingController(); // Tambahan controller
-    final TextEditingController _classNameController = TextEditingController(); // Tambahan controller
-    String _selectedDay = 'Senin';
-    TimeOfDay _selectedTime = TimeOfDay.now();
-    final _formKey = GlobalKey<FormState>();
+    final TextEditingController subjectController = TextEditingController();
+    final TextEditingController roomController = TextEditingController();
+    final TextEditingController teacherController = TextEditingController(); // Tambahan controller
+    final TextEditingController classNameController = TextEditingController(); // Tambahan controller
+    String selectedDay = 'Senin';
+    TimeOfDay selectedTime = TimeOfDay.now();
+    final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
@@ -535,13 +535,13 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
               return Form(
-                key: _formKey,
+                key: formKey,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextFormField(
-                        controller: _classNameController,
+                        controller: classNameController,
                         decoration: const InputDecoration(labelText: 'Nama Kelas (ex: Dev Education)'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -552,7 +552,7 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
-                        controller: _subjectController,
+                        controller: subjectController,
                         decoration: const InputDecoration(labelText: 'Mata Pelajaran'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -563,7 +563,7 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
                       ),
                       const SizedBox(height: 10),
                       DropdownButtonFormField<String>(
-                        value: _selectedDay,
+                        value: selectedDay,
                         decoration: const InputDecoration(labelText: 'Hari'),
                         items: <String>['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
                             .map<DropdownMenuItem<String>>((String value) {
@@ -575,35 +575,35 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
                         onChanged: (String? newValue) {
                           if (newValue != null) {
                             setState(() {
-                              _selectedDay = newValue;
+                              selectedDay = newValue;
                             });
                           }
                         },
                       ),
                       const SizedBox(height: 10),
                       ListTile(
-                        title: Text('Waktu: ${_selectedTime.format(context)}'),
+                        title: Text('Waktu: ${selectedTime.format(context)}'),
                         trailing: const Icon(Icons.access_time),
                         onTap: () async {
                           final TimeOfDay? picked = await showTimePicker(
                             context: context,
-                            initialTime: _selectedTime,
+                            initialTime: selectedTime,
                           );
-                          if (picked != null && picked != _selectedTime) {
+                          if (picked != null && picked != selectedTime) {
                             setState(() {
-                              _selectedTime = picked;
+                              selectedTime = picked;
                             });
                           }
                         },
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
-                        controller: _roomController,
+                        controller: roomController,
                         decoration: const InputDecoration(labelText: 'Ruangan (Opsional)'),
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
-                        controller: _teacherController,
+                        controller: teacherController,
                         decoration: const InputDecoration(labelText: 'Dosen/Guru (Opsional)'),
                       ),
                     ],
@@ -622,15 +622,15 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
             ElevatedButton(
               child: const Text('Tambah'),
               onPressed: () {
-                if (_formKey.currentState!.validate()) {
+                if (formKey.currentState!.validate()) {
                   final newSchedule = ClassSchedule(
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    subject: _subjectController.text,
-                    day: _selectedDay,
-                    time: _selectedTime,
-                    room: _roomController.text.isNotEmpty ? _roomController.text : null,
-                    teacher: _teacherController.text.isNotEmpty ? _teacherController.text : null,
-                    className: _classNameController.text.isNotEmpty ? _classNameController.text : null,
+                    subject: subjectController.text,
+                    day: selectedDay,
+                    time: selectedTime,
+                    room: roomController.text.isNotEmpty ? roomController.text : null,
+                    teacher: teacherController.text.isNotEmpty ? teacherController.text : null,
+                    className: classNameController.text.isNotEmpty ? classNameController.text : null,
                   );
                   _addSchedule(newSchedule);
                   Navigator.of(dialogContext).pop();

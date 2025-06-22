@@ -34,7 +34,7 @@ class FinancialTransaction {
       title: json['title'] as String,
       amount: json['amount'] as double,
       type: TransactionType.values.firstWhere(
-        (e) => e.toString() == 'TransactionType.' + (json['type'] as String),
+        (e) => e.toString() == 'TransactionType.${json['type'] as String}',
       ),
       date: DateTime.parse(json['date'] as String),
       description: json['description'] as String?,
@@ -120,6 +120,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image != null) {
       ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
         context,
       ).showSnackBar(SnackBar(content: Text('Memproses gambar nota...')));
       try {
@@ -127,12 +128,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
         if (detectedText != null) {
           _processOcrText(detectedText);
         } else {
+          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Gagal mendeteksi teks dari nota.')),
           );
         }
       } catch (e) {
         ScaffoldMessenger.of(
+          // ignore: use_build_context_synchronously
           context,
         ).showSnackBar(SnackBar(content: Text('Error saat memproses OCR: $e')));
       }
@@ -141,6 +144,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
   Future<String?> _performOcr(File imageFile) async {
     final inputImage = InputImage.fromFile(imageFile);
+    // ignore: deprecated_member_use
     final textRecognizer = GoogleMlKit.vision.textRecognizer();
     try {
       final RecognizedText recognizedText = await textRecognizer.processImage(
@@ -187,21 +191,22 @@ class _FinanceScreenState extends State<FinanceScreen> {
     }
     if (itemsFound.isNotEmpty) {
       titleGuess = 'Nota: ${itemsFound.join(', ')}';
-      if (titleGuess.length > 50)
-        titleGuess = titleGuess.substring(0, 47) + '...';
+      if (titleGuess.length > 50) {
+        titleGuess = '${titleGuess.substring(0, 47)}...';
+      }
     }
 
-    final TextEditingController _titleController = TextEditingController(
+    final TextEditingController titleController = TextEditingController(
       text: titleGuess,
     );
-    final TextEditingController _amountController = TextEditingController(
+    final TextEditingController amountController = TextEditingController(
       text: amountGuess?.toStringAsFixed(2) ?? '',
     );
-    final TextEditingController _descriptionController = TextEditingController(
+    final TextEditingController descriptionController = TextEditingController(
       text: 'Scan dari nota:\n$ocrText',
     );
-    TransactionType _selectedType = typeGuess;
-    DateTime _selectedDate = DateTime.now();
+    TransactionType selectedType = typeGuess;
+    DateTime selectedDate = DateTime.now();
 
     showDialog(
       context: context,
@@ -214,21 +219,21 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 child: Column(
                   children: [
                     TextFormField(
-                      controller: _titleController,
+                      controller: titleController,
                       decoration: InputDecoration(labelText: 'Nama Transaksi'),
                     ),
                     TextFormField(
-                      controller: _amountController,
+                      controller: amountController,
                       decoration: InputDecoration(labelText: 'Jumlah (Rp)'),
                       keyboardType: TextInputType.number,
                     ),
                     TextFormField(
-                      controller: _descriptionController,
+                      controller: descriptionController,
                       decoration: InputDecoration(labelText: 'Deskripsi'),
                       maxLines: 4,
                     ),
                     DropdownButtonFormField<TransactionType>(
-                      value: _selectedType,
+                      value: selectedType,
                       decoration: InputDecoration(labelText: 'Jenis Transaksi'),
                       items:
                           TransactionType.values
@@ -244,23 +249,24 @@ class _FinanceScreenState extends State<FinanceScreen> {
                               )
                               .toList(),
                       onChanged: (type) {
-                        if (type != null) setState(() => _selectedType = type);
+                        if (type != null) setState(() => selectedType = type);
                       },
                     ),
                     ListTile(
                       title: Text(
-                        'Tanggal: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                        'Tanggal: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
                       ),
                       trailing: Icon(Icons.calendar_today),
                       onTap: () async {
                         final DateTime? picked = await showDatePicker(
                           context: context,
-                          initialDate: _selectedDate,
+                          initialDate: selectedDate,
                           firstDate: DateTime(2000),
                           lastDate: DateTime(2101),
                         );
-                        if (picked != null)
-                          setState(() => _selectedDate = picked);
+                        if (picked != null) {
+                          setState(() => selectedDate = picked);
+                        }
                       },
                     ),
                   ],
@@ -275,15 +281,15 @@ class _FinanceScreenState extends State<FinanceScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (_titleController.text.isNotEmpty &&
-                    double.tryParse(_amountController.text) != null) {
+                if (titleController.text.isNotEmpty &&
+                    double.tryParse(amountController.text) != null) {
                   final newTransaction = FinancialTransaction(
                     id: _uuid.v4(),
-                    title: _titleController.text,
-                    amount: double.parse(_amountController.text),
-                    type: _selectedType,
-                    date: _selectedDate,
-                    description: _descriptionController.text,
+                    title: titleController.text,
+                    amount: double.parse(amountController.text),
+                    type: selectedType,
+                    date: selectedDate,
+                    description: descriptionController.text,
                     source: 'ocr',
                   );
                   _addTransaction(newTransaction);
@@ -305,12 +311,12 @@ class _FinanceScreenState extends State<FinanceScreen> {
   }
 
   void _showAddTransactionDialog() {
-    final TextEditingController _titleController = TextEditingController();
-    final TextEditingController _amountController = TextEditingController();
-    final TextEditingController _descriptionController =
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController amountController = TextEditingController();
+    final TextEditingController descriptionController =
         TextEditingController();
-    TransactionType _selectedType = TransactionType.expense;
-    DateTime _selectedDate = DateTime.now();
+    TransactionType selectedType = TransactionType.expense;
+    DateTime selectedDate = DateTime.now();
 
     showDialog(
       context: context,
@@ -321,20 +327,20 @@ class _FinanceScreenState extends State<FinanceScreen> {
             child: Column(
               children: [
                 TextField(
-                  controller: _titleController,
+                  controller: titleController,
                   decoration: InputDecoration(labelText: 'Nama Transaksi'),
                 ),
                 TextField(
-                  controller: _amountController,
+                  controller: amountController,
                   decoration: InputDecoration(labelText: 'Jumlah (Rp)'),
                   keyboardType: TextInputType.number,
                 ),
                 TextField(
-                  controller: _descriptionController,
+                  controller: descriptionController,
                   decoration: InputDecoration(labelText: 'Deskripsi'),
                 ),
                 DropdownButton<TransactionType>(
-                  value: _selectedType,
+                  value: selectedType,
                   items:
                       TransactionType.values
                           .map(
@@ -348,20 +354,20 @@ class _FinanceScreenState extends State<FinanceScreen> {
                             ),
                           )
                           .toList(),
-                  onChanged: (value) => setState(() => _selectedType = value!),
+                  onChanged: (value) => setState(() => selectedType = value!),
                 ),
                 TextButton(
                   onPressed: () async {
                     final picked = await showDatePicker(
                       context: context,
-                      initialDate: _selectedDate,
+                      initialDate: selectedDate,
                       firstDate: DateTime(2020),
                       lastDate: DateTime(2100),
                     );
-                    if (picked != null) setState(() => _selectedDate = picked);
+                    if (picked != null) setState(() => selectedDate = picked);
                   },
                   child: Text(
-                    'Tanggal: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                    'Tanggal: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
                   ),
                 ),
               ],
@@ -374,15 +380,15 @@ class _FinanceScreenState extends State<FinanceScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (_titleController.text.isNotEmpty &&
-                    double.tryParse(_amountController.text) != null) {
+                if (titleController.text.isNotEmpty &&
+                    double.tryParse(amountController.text) != null) {
                   final newTransaction = FinancialTransaction(
                     id: _uuid.v4(),
-                    title: _titleController.text,
-                    amount: double.parse(_amountController.text),
-                    type: _selectedType,
-                    date: _selectedDate,
-                    description: _descriptionController.text,
+                    title: titleController.text,
+                    amount: double.parse(amountController.text),
+                    type: selectedType,
+                    date: selectedDate,
+                    description: descriptionController.text,
                     source: 'manual',
                   );
                   _addTransaction(newTransaction);

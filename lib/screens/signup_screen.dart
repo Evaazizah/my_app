@@ -81,9 +81,11 @@ class _SignupScreenState extends State<SignupScreen> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     await saveUserData();
+                    // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Sign Up Berhasil')),
                     );
+                    // ignore: use_build_context_synchronously
                     Navigator.pop(context);
                   }
                 },

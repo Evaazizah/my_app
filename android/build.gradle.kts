@@ -1,15 +1,11 @@
-// android/build.gradle.kts
-
-import org.gradle.api.tasks.Delete
-import org.gradle.api.file.Directory
-
 buildscript {
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.google.gms:google-services:4.3.15")
+        classpath("com.android.tools.build:gradle:8.1.2")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22")
     }
 }
 
@@ -20,17 +16,6 @@ allprojects {
     }
 }
 
-// Atur ulang direktori build ke luar folder
-val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
-rootProject.layout.buildDirectory.value(newBuildDir)
-
-subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
-    project.evaluationDependsOn(":app")
+tasks.register("clean", Delete::class) {
+    delete(rootProject.buildDir)
 }
-
-tasks.register<Delete>("clean") {
-    delete(rootProject.layout.buildDirectory)
-}
-

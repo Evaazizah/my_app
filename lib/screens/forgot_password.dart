@@ -14,22 +14,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   void sendResetLink() async {
     final email = emailController.text.trim();
     if (email.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Email tidak boleh kosong')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email tidak boleh kosong')),
+      );
       return;
     }
 
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Link reset telah dikirim ke $email')),
       );
       emailController.clear();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal mengirim link reset: $e')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengirim link reset: $e')),
+      );
     }
   }
 
@@ -59,6 +62,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               decoration: InputDecoration(
                 hintText: 'Email kamu',
                 filled: true,
+                // ignore: deprecated_member_use
                 fillColor: Colors.white.withOpacity(0.5),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
