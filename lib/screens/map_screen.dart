@@ -28,26 +28,66 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _getLocation() async {
-    await Geolocator.requestPermission();
-    Position pos = await Geolocator.getCurrentPosition(
-      // ignore: deprecated_member_use
-      desiredAccuracy: LocationAccuracy.high,
-    );
-    setState(() {
-      userLocation = LatLng(pos.latitude, pos.longitude);
-    });
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      setState(() {
+        catFact = 'Layanan lokasi tidak aktif.';
+      });
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        setState(() {
+          catFact = 'Izin lokasi ditolak.';
+        });
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      setState(() {
+        catFact = 'Izin lokasi ditolak permanen.';
+      });
+      return;
+    }
+
+    try {
+      Position pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      setState(() {
+        userLocation = LatLng(pos.latitude, pos.longitude);
+      });
+      print('Lokasi didapat: ${pos.latitude}, ${pos.longitude}');
+    } catch (e) {
+      setState(() {
+        catFact = 'Gagal mendapatkan lokasi: $e';
+      });
+    }
   }
 
   Future<void> _getCatFact() async {
-    final res = await http.get(Uri.parse('https://catfact.ninja/fact'));
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
+    try {
+      final res = await http.get(Uri.parse('https://catfact.ninja/fact'));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        setState(() {
+          catFact = data['fact'];
+        });
+      } else {
+        setState(() {
+          catFact = 'Gagal mengambil fakta kucing.';
+        });
+      }
+    } catch (e) {
       setState(() {
-        catFact = data['fact'];
-      });
-    } else {
-      setState(() {
-        catFact = 'Gagal mengambil fakta kucing.';
+        catFact = 'Gagal mengambil fakta kucing: $e';
       });
     }
   }
@@ -63,10 +103,7 @@ class _MapScreenState extends State<MapScreen> {
                 Expanded(
                   child: FlutterMap(
                     options: MapOptions(
-                      // ignore: deprecated_member_use
-                      onTap: (tapPosition, latLng) {
-                        // You can handle tap events here if needed
-                      },
+                      initialCenter: userLocation!,
                       initialZoom: 15,
                     ),
                     children: [
@@ -95,8 +132,7 @@ class _MapScreenState extends State<MapScreen> {
                   width: double.infinity,
                   child: Text(
                     catFact ?? 'Mengambil fakta kucing...',
-                    style: const TextStyle(
-                        color: Colors.white, fontSize: 16),
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                     textAlign: TextAlign.center,
                   ),
                 )
