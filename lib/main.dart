@@ -91,6 +91,7 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const SignupScreen(),
         '/scan-nota': (context) => const OCRScanScreen(),
         '/map': (context) => const MapScreen(),
+        
       },
     );
   }

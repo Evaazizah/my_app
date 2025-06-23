@@ -125,8 +125,8 @@ class MainDashboard extends StatelessWidget {
               _buildMenuItem(
                 context,
                 Icons.local_shipping,
-                'Track & Alert',
-                () => Navigator.pushNamed(context, '/track'),
+                'Map & Cat',
+                () => Navigator.pushNamed(context, '/map'),
               ),
               _buildMenuItem(
                 context,

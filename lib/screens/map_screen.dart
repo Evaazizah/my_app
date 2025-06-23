@@ -30,6 +30,7 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _getLocation() async {
     await Geolocator.requestPermission();
     Position pos = await Geolocator.getCurrentPosition(
+      // ignore: deprecated_member_use
       desiredAccuracy: LocationAccuracy.high,
     );
     setState(() {
@@ -63,9 +64,10 @@ class _MapScreenState extends State<MapScreen> {
                   child: FlutterMap(
                     options: MapOptions(
                       // ignore: deprecated_member_use
-                      center: userLocation,
-                      // ignore: deprecated_member_use
-                      zoom: 15,
+                      onTap: (tapPosition, latLng) {
+                        // You can handle tap events here if needed
+                      },
+                      initialZoom: 15,
                     ),
                     children: [
                       TileLayer(
