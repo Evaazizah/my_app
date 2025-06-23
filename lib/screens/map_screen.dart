@@ -59,6 +59,7 @@ class _MapScreenState extends State<MapScreen> {
 
     try {
       Position pos = await Geolocator.getCurrentPosition(
+        // ignore: deprecated_member_use
         desiredAccuracy: LocationAccuracy.high,
       );
       setState(() {
@@ -96,48 +97,52 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Peta & Fakta Kucing')),
-      body: userLocation == null
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Expanded(
-                  child: FlutterMap(
-                    options: MapOptions(
-                      initialCenter: userLocation!,
-                      initialZoom: 15,
+      body:
+          userLocation == null
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                children: [
+                  Expanded(
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: userLocation!,
+                        initialZoom: 15,
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://sig.bps.go.id/rest-bridging/getwilayah?level=provinsi',
+                          userAgentPackageName: 'com.example.catmap_app',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              width: 60,
+                              height: 60,
+                              point: userLocation!,
+                              child: const Icon(
+                                Icons.location_pin,
+                                color: Colors.red,
+                                size: 40,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.example.catmap_app',
-                      ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            width: 60,
-                            height: 60,
-                            point: userLocation!,
-                            child: const Icon(Icons.location_pin,
-                                color: Colors.red, size: 40),
-                          ),
-                        ],
-                      ),
-                    ],
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  color: Colors.black87,
-                  width: double.infinity,
-                  child: Text(
-                    catFact ?? 'Mengambil fakta kucing...',
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                    textAlign: TextAlign.center,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    color: Colors.black87,
+                    width: double.infinity,
+                    child: Text(
+                      catFact ?? 'Mengambil fakta kucing...',
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                )
-              ],
-            ),
+                ],
+              ),
     );
   }
 }

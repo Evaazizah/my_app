@@ -18,7 +18,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
   String _extractedText = '';
   bool _loading = false;
   final picker = ImagePicker();
-  final Uuid _uuid = Uuid();
+  final Uuid _uuid = const Uuid();
 
   Future<void> _pickImage() async {
     final pickedFile = await picker.pickImage(source: ImageSource.camera);

@@ -11,6 +11,9 @@ analyzer:
   errors:
     file_names: ignore
     avoid_print: ignore
+    unused_import: ignore
+    depend_on_referenced_packages: ignore
+    use_build_context_synchronously: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:
@@ -25,6 +28,10 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
+    - avoid_print
+    - prefer_const_constructors
+    - camel_case_types
+
     # avoid_print: false  # Uncomment to disable the `avoid_print` rule
     # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
 

@@ -12,6 +12,8 @@ import 'screens/ocr_scan_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/map_screen.dart';
+import 'package:provider/provider.dart';
+import 'screens/profile_screen.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
@@ -38,7 +40,12 @@ class ThemeProvider extends ChangeNotifier {
 }
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -46,9 +53,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       title: 'TRENIX',
       debugShowCheckedModeBanner: false,
+      themeMode: themeProvider.themeMode,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         brightness: Brightness.light,
@@ -59,9 +69,10 @@ class MyApp extends StatelessWidget {
           foregroundColor: Colors.black,
         ),
         cardColor: Colors.white,
-        textTheme: GoogleFonts.poppinsTextTheme(
-          Theme.of(context).textTheme,
-        ).apply(bodyColor: Colors.black),
+        textTheme: GoogleFonts.poppinsTextTheme().apply(
+          bodyColor: Colors.black,
+          displayColor: Colors.black,
+        ),
         useMaterial3: true,
       ),
       darkTheme: ThemeData(
@@ -74,15 +85,16 @@ class MyApp extends StatelessWidget {
           foregroundColor: Colors.white,
         ),
         cardColor: Colors.grey[800],
-        textTheme: GoogleFonts.poppinsTextTheme(
-          Theme.of(context).textTheme,
-        ).apply(bodyColor: Colors.white),
+        textTheme: GoogleFonts.poppinsTextTheme().apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
+        ),
         useMaterial3: true,
       ),
       routes: {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
-        '/login': (context) => LoginScreen(),
+        '/login': (context) => const LoginScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/forgot': (context) => const ForgotPasswordScreen(),
         '/todo': (context) => const TodoScreen(),
@@ -91,7 +103,7 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const SignupScreen(),
         '/scan-nota': (context) => const OCRScanScreen(),
         '/map': (context) => const MapScreen(),
-        
+        '/profile': (context) => const ProfileScreen(),
       },
     );
   }

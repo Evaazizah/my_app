@@ -6,10 +6,10 @@ import 'dart:convert';
 class Todo {
   String id;
   String title;
-  String description; // Bisa jadi detail tugas
+  String description; 
   bool isCompleted;
-  DateTime? dueDate; // Tambahan: Tanggal jatuh tempo
-  DateTime creationDate; // Tanggal dibuat
+  DateTime? dueDate;
+  DateTime creationDate; 
 
   Todo({
     required this.id,
@@ -134,11 +134,20 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
   Future<void> _saveData() async {
     final prefs = await SharedPreferences.getInstance();
 
+    // Simpan todo sebagai List<String>
     final List<String> todosJson = _todos.map((todo) => json.encode(todo.toJson())).toList();
     await prefs.setStringList('todos', todosJson);
 
+    // Simpan class schedule
     final List<String> schedulesJson = _classSchedules.map((schedule) => json.encode(schedule.toJson())).toList();
     await prefs.setStringList('classSchedules', schedulesJson);
+
+    // ✅ Tambahan penting agar dashboard & export bekerja:
+    final encodedTodos = jsonEncode(_todos.map((t) => t.toJson()).toList());
+    await prefs.setString('todo_list', encodedTodos);
+
+    final unfinished = _todos.where((t) => !t.isCompleted).length;
+    await prefs.setInt('task_pending', unfinished);
   }
 
   void _addTodo(Todo newTodo) {

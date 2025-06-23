@@ -64,7 +64,7 @@ class FinanceScreen extends StatefulWidget {
 
 class _FinanceScreenState extends State<FinanceScreen> {
   List<FinancialTransaction> _transactions = [];
-  final Uuid _uuid = Uuid();
+  final Uuid _uuid = const Uuid();
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -79,10 +79,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
     if (transactionsJson != null) {
       final List<dynamic> decodedList = json.decode(transactionsJson);
       setState(() {
-        _transactions =
-            decodedList
-                .map((json) => FinancialTransaction.fromJson(json))
-                .toList();
+        _transactions = decodedList
+            .map((json) => FinancialTransaction.fromJson(json))
+            .toList();
       });
     }
   }
@@ -95,11 +94,24 @@ class _FinanceScreenState extends State<FinanceScreen> {
     await prefs.setString('financial_transactions', encodedList);
   }
 
+  Future<void> _saveSaldoKeuangan() async {
+    final prefs = await SharedPreferences.getInstance();
+    final double totalIncome = _transactions
+        .where((t) => t.type == TransactionType.income)
+        .fold(0.0, (sum, item) => sum + item.amount);
+    final double totalExpense = _transactions
+        .where((t) => t.type == TransactionType.expense)
+        .fold(0.0, (sum, item) => sum + item.amount);
+    final double balance = totalIncome - totalExpense;
+    await prefs.setInt('saldo_keuangan', balance.toInt());
+  }
+
   void _addTransaction(FinancialTransaction transaction) {
     setState(() {
       _transactions.add(transaction);
       _transactions.sort((a, b) => b.date.compareTo(a.date));
       _saveTransactions();
+      _saveSaldoKeuangan(); // Tambahan penting
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Transaksi ${transaction.title} ditambahkan!')),
@@ -110,34 +122,32 @@ class _FinanceScreenState extends State<FinanceScreen> {
     setState(() {
       _transactions.removeWhere((t) => t.id == id);
       _saveTransactions();
+      _saveSaldoKeuangan(); // Tambahan penting
     });
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Transaksi dihapus!')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Transaksi dihapus!')));
   }
 
+  // --- Fungsi scan nota dengan OCR (tidak berubah)
   Future<void> _scanReceipt() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      ScaffoldMessenger.of(
-        // ignore: use_build_context_synchronously
-        context,
-      ).showSnackBar(SnackBar(content: Text('Memproses gambar nota...')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Memproses gambar nota...')),
+      );
       try {
         final String? detectedText = await _performOcr(File(image.path));
         if (detectedText != null) {
           _processOcrText(detectedText);
         } else {
-          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Gagal mendeteksi teks dari nota.')),
+            const SnackBar(content: Text('Gagal mendeteksi teks dari nota.')),
           );
         }
       } catch (e) {
-        ScaffoldMessenger.of(
-          // ignore: use_build_context_synchronously
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error saat memproses OCR: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saat memproses OCR: $e')),
+        );
       }
     }
   }
@@ -147,9 +157,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
     // ignore: deprecated_member_use
     final textRecognizer = GoogleMlKit.vision.textRecognizer();
     try {
-      final RecognizedText recognizedText = await textRecognizer.processImage(
-        inputImage,
-      );
+      final RecognizedText recognizedText =
+          await textRecognizer.processImage(inputImage);
       await textRecognizer.close();
       return recognizedText.text;
     } catch (e) {
@@ -173,10 +182,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
     Match? match =
         totalRegex.firstMatch(ocrText) ?? totalRegex2.firstMatch(ocrText);
     if (match != null) {
-      String amountStr = match
-          .group(1)!
-          .replaceAll('.', '')
-          .replaceAll(',', '.');
+      String amountStr =
+          match.group(1)!.replaceAll('.', '').replaceAll(',', '.');
       amountGuess = double.tryParse(amountStr);
     }
 
@@ -196,15 +203,12 @@ class _FinanceScreenState extends State<FinanceScreen> {
       }
     }
 
-    final TextEditingController titleController = TextEditingController(
-      text: titleGuess,
-    );
-    final TextEditingController amountController = TextEditingController(
-      text: amountGuess?.toStringAsFixed(2) ?? '',
-    );
-    final TextEditingController descriptionController = TextEditingController(
-      text: 'Scan dari nota:\n$ocrText',
-    );
+    final TextEditingController titleController =
+        TextEditingController(text: titleGuess);
+    final TextEditingController amountController =
+        TextEditingController(text: amountGuess?.toStringAsFixed(2) ?? '');
+    final TextEditingController descriptionController =
+        TextEditingController(text: 'Scan dari nota:\n$ocrText');
     TransactionType selectedType = typeGuess;
     DateTime selectedDate = DateTime.now();
 
@@ -212,53 +216,48 @@ class _FinanceScreenState extends State<FinanceScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Konfirmasi Transaksi dari Nota'),
+          title: const Text('Konfirmasi Transaksi dari Nota'),
           content: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
+            builder: (context, setState) {
               return SingleChildScrollView(
                 child: Column(
                   children: [
                     TextFormField(
                       controller: titleController,
-                      decoration: InputDecoration(labelText: 'Nama Transaksi'),
+                      decoration: const InputDecoration(labelText: 'Nama Transaksi'),
                     ),
                     TextFormField(
                       controller: amountController,
-                      decoration: InputDecoration(labelText: 'Jumlah (Rp)'),
+                      decoration: const InputDecoration(labelText: 'Jumlah (Rp)'),
                       keyboardType: TextInputType.number,
                     ),
                     TextFormField(
                       controller: descriptionController,
-                      decoration: InputDecoration(labelText: 'Deskripsi'),
+                      decoration: const InputDecoration(labelText: 'Deskripsi'),
                       maxLines: 4,
                     ),
                     DropdownButtonFormField<TransactionType>(
                       value: selectedType,
-                      decoration: InputDecoration(labelText: 'Jenis Transaksi'),
-                      items:
-                          TransactionType.values
-                              .map(
-                                (type) => DropdownMenuItem(
-                                  value: type,
-                                  child: Text(
-                                    type == TransactionType.income
-                                        ? 'Pemasukan'
-                                        : 'Pengeluaran',
-                                  ),
-                                ),
-                              )
-                              .toList(),
+                      decoration:
+                          const InputDecoration(labelText: 'Jenis Transaksi'),
+                      items: TransactionType.values
+                          .map((type) => DropdownMenuItem(
+                                value: type,
+                                child: Text(type == TransactionType.income
+                                    ? 'Pemasukan'
+                                    : 'Pengeluaran'),
+                              ))
+                          .toList(),
                       onChanged: (type) {
                         if (type != null) setState(() => selectedType = type);
                       },
                     ),
                     ListTile(
                       title: Text(
-                        'Tanggal: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                      ),
-                      trailing: Icon(Icons.calendar_today),
+                          'Tanggal: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'),
+                      trailing: const Icon(Icons.calendar_today),
                       onTap: () async {
-                        final DateTime? picked = await showDatePicker(
+                        final picked = await showDatePicker(
                           context: context,
                           initialDate: selectedDate,
                           firstDate: DateTime(2000),
@@ -277,7 +276,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Batal'),
+              child: const Text('Batal'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -296,18 +295,12 @@ class _FinanceScreenState extends State<FinanceScreen> {
                   Navigator.pop(context);
                 }
               },
-              child: Text('Simpan'),
+              child: const Text('Simpan'),
             ),
           ],
         );
       },
     );
-  }
-
-  double _getTotalFromOCR() {
-    return _transactions
-        .where((t) => t.source == 'ocr' && t.type == TransactionType.expense)
-        .fold(0.0, (sum, t) => sum + t.amount);
   }
 
   void _showAddTransactionDialog() {
@@ -322,38 +315,33 @@ class _FinanceScreenState extends State<FinanceScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Tambah Transaksi Manual'),
+          title: const Text('Tambah Transaksi Manual'),
           content: SingleChildScrollView(
             child: Column(
               children: [
                 TextField(
                   controller: titleController,
-                  decoration: InputDecoration(labelText: 'Nama Transaksi'),
+                  decoration: const InputDecoration(labelText: 'Nama Transaksi'),
                 ),
                 TextField(
                   controller: amountController,
-                  decoration: InputDecoration(labelText: 'Jumlah (Rp)'),
+                  decoration: const InputDecoration(labelText: 'Jumlah (Rp)'),
                   keyboardType: TextInputType.number,
                 ),
                 TextField(
                   controller: descriptionController,
-                  decoration: InputDecoration(labelText: 'Deskripsi'),
+                  decoration: const InputDecoration(labelText: 'Deskripsi'),
                 ),
                 DropdownButton<TransactionType>(
                   value: selectedType,
-                  items:
-                      TransactionType.values
-                          .map(
-                            (type) => DropdownMenuItem(
-                              value: type,
-                              child: Text(
-                                type == TransactionType.income
-                                    ? 'Pemasukan'
-                                    : 'Pengeluaran',
-                              ),
-                            ),
-                          )
-                          .toList(),
+                  items: TransactionType.values
+                      .map((type) => DropdownMenuItem(
+                            value: type,
+                            child: Text(type == TransactionType.income
+                                ? 'Pemasukan'
+                                : 'Pengeluaran'),
+                          ))
+                      .toList(),
                   onChanged: (value) => setState(() => selectedType = value!),
                 ),
                 TextButton(
@@ -376,7 +364,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Batal'),
+              child: const Text('Batal'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -395,12 +383,18 @@ class _FinanceScreenState extends State<FinanceScreen> {
                   Navigator.pop(context);
                 }
               },
-              child: Text('Simpan'),
+              child: const Text('Simpan'),
             ),
           ],
         );
       },
     );
+  }
+
+  double _getTotalFromOCR() {
+    return _transactions
+        .where((t) => t.source == 'ocr' && t.type == TransactionType.expense)
+        .fold(0.0, (sum, t) => sum + t.amount);
   }
 
   @override
@@ -415,9 +409,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Finance & Keuangan'),
+        title: const Text('Finance & Keuangan'),
         actions: [
-          IconButton(icon: Icon(Icons.camera_alt), onPressed: _scanReceipt),
+          IconButton(icon: const Icon(Icons.camera_alt), onPressed: _scanReceipt),
         ],
       ),
       body: Column(
@@ -434,56 +428,44 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Ringkasan Keuangan',
-                      style: GoogleFonts.poppins(fontSize: 20),
-                    ),
-                    SizedBox(height: 10),
+                    Text('Ringkasan Keuangan',
+                        style: GoogleFonts.poppins(fontSize: 20)),
+                    const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Total Pemasukan:'),
-                        Text(
-                          'Rp ${totalIncome.toStringAsFixed(2)}',
-                          style: TextStyle(color: Colors.green),
-                        ),
+                        const Text('Total Pemasukan:'),
+                        Text('Rp ${totalIncome.toStringAsFixed(2)}',
+                            style: const TextStyle(color: Colors.green)),
                       ],
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Total Pengeluaran:'),
-                        Text(
-                          'Rp ${totalExpense.toStringAsFixed(2)}',
-                          style: TextStyle(color: Colors.red),
-                        ),
+                        const Text('Total Pengeluaran:'),
+                        Text('Rp ${totalExpense.toStringAsFixed(2)}',
+                            style: const TextStyle(color: Colors.red)),
                       ],
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Total dari Scan Nota:'),
-                        Text(
-                          'Rp ${_getTotalFromOCR().toStringAsFixed(2)}',
-                          style: TextStyle(color: Colors.purple),
-                        ),
+                        const Text('Total dari Scan Nota:'),
+                        Text('Rp ${_getTotalFromOCR().toStringAsFixed(2)}',
+                            style: const TextStyle(color: Colors.purple)),
                       ],
                     ),
-                    Divider(height: 20),
+                    const Divider(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Saldo Bersih:',
-                          style: GoogleFonts.poppins(fontSize: 16),
-                        ),
-                        Text(
-                          'Rp ${balance.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: balance >= 0 ? Colors.blue : Colors.orange,
-                          ),
-                        ),
+                        Text('Saldo Bersih:',
+                            style: GoogleFonts.poppins(fontSize: 16)),
+                        Text('Rp ${balance.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: balance >= 0 ? Colors.blue : Colors.orange,
+                            )),
                       ],
                     ),
                   ],
@@ -492,54 +474,52 @@ class _FinanceScreenState extends State<FinanceScreen> {
             ),
           ),
           Expanded(
-            child:
-                _transactions.isEmpty
-                    ? Center(child: Text('Belum ada transaksi'))
-                    : ListView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      itemCount: _transactions.length,
-                      itemBuilder: (context, index) {
-                        final t = _transactions[index];
-                        return Card(
-                          margin: EdgeInsets.only(bottom: 12.0),
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
+            child: _transactions.isEmpty
+                ? const Center(child: Text('Belum ada transaksi'))
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    itemCount: _transactions.length,
+                    itemBuilder: (context, index) {
+                      final t = _transactions[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12.0),
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: ListTile(
+                          leading: Icon(
+                            t.type == TransactionType.income
+                                ? Icons.arrow_downward
+                                : Icons.arrow_upward,
+                            color: t.type == TransactionType.income
+                                ? Colors.green
+                                : Colors.red,
                           ),
-                          child: ListTile(
-                            leading: Icon(
-                              t.type == TransactionType.income
-                                  ? Icons.arrow_downward
-                                  : Icons.arrow_upward,
-                              color:
-                                  t.type == TransactionType.income
-                                      ? Colors.green
-                                      : Colors.red,
-                            ),
-                            title: Text(t.title),
-                            subtitle: Text(
-                              '${t.description ?? ''}\n${t.date.day}/${t.date.month}/${t.date.year}',
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('Rp ${t.amount.toStringAsFixed(2)}'),
-                                IconButton(
-                                  icon: Icon(Icons.delete),
-                                  onPressed: () => _deleteTransaction(t.id),
-                                ),
-                              ],
-                            ),
+                          title: Text(t.title),
+                          subtitle: Text(
+                            '${t.description ?? ''}\n${t.date.day}/${t.date.month}/${t.date.year}',
                           ),
-                        );
-                      },
-                    ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Rp ${t.amount.toStringAsFixed(2)}'),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () => _deleteTransaction(t.id),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTransactionDialog,
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }

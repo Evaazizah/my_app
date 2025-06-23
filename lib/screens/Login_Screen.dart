@@ -23,7 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
       // ignore: use_build_context_synchronously
       Navigator.pushReplacementNamed(context, '/dashboard');
     } else {
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Email atau Password salah!')),
       );
