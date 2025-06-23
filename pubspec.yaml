@@ -39,10 +39,7 @@ dependencies:
   firebase_auth: ^5.6.0
   google_sign_in: ^6.2.1
   cloud_firestore: ^5.6.9
-  google_maps_flutter: ^2.1.10
-  geolocator: ^12.0.0
-  http: ^1.2.0
-  flutter_local_notifications: ^19.2.1
+  http: ^1.2.01
   image_picker: ^1.0.0
   tesseract_ocr: ^0.5.0
   uuid: ^3.0.4
@@ -53,11 +50,6 @@ dependencies:
   google_fonts: ^6.1.0
   logger: ^2.1.0
   google_ml_kit: ^0.20.0
-  path_provider: ^2.1.1
-  assets_audio_player: ^3.0.4+2
-  file_picker: ^5.2.6
-  audioplayers: ^5.2.1
-  permission_handler: ^10.2.0
 
 dev_dependencies:
   flutter_test:
@@ -92,7 +84,7 @@ flutter:
     - assets/icons/onboarding3.jpg
     - assets/icons/Logo.json
     - assets/icons/Loading.json
-    - assets/sounds/alarm.mp3
+    - assets/icons/TRENIX.png
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
