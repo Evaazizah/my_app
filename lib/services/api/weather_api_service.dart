@@ -13,6 +13,7 @@ class WeatherApiService {
       final data = jsonDecode(response.body);
       return data;
     } else {
+      // ignore: avoid_print
       print('Failed to fetch weather: ${response.statusCode}');
       return null;
     }

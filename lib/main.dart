@@ -11,6 +11,7 @@ import 'screens/signup_screen.dart';
 import 'screens/ocr_scan_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/map_screen.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
@@ -89,6 +90,7 @@ class MyApp extends StatelessWidget {
         '/weather': (context) => const WeatherScreen(),
         '/signup': (context) => const SignupScreen(),
         '/scan-nota': (context) => const OCRScanScreen(),
+        '/map': (context) => const MapScreen(),
       },
     );
   }
