@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -14,81 +14,47 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   LatLng? userLocation;
-  String? catFact;
+
+  List provinces = [];
+  List regencies = [];
+
+  String? selectedProvinceId;
+  String? selectedRegency;
 
   @override
   void initState() {
     super.initState();
-    _initialize();
+    _initLocation();
+    _fetchProvinces();
   }
 
-  Future<void> _initialize() async {
-    await _getLocation();
-    await _getCatFact();
-  }
-
-  Future<void> _getLocation() async {
-    bool serviceEnabled;
+  Future<void> _initLocation() async {
     LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      setState(() {
-        catFact = 'Layanan lokasi tidak aktif.';
-      });
-      return;
-    }
-
     permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        setState(() {
-          catFact = 'Izin lokasi ditolak.';
-        });
-        return;
-      }
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      await Geolocator.requestPermission();
     }
 
-    if (permission == LocationPermission.deniedForever) {
-      setState(() {
-        catFact = 'Izin lokasi ditolak permanen.';
-      });
-      return;
-    }
+    Position position = await Geolocator.getCurrentPosition();
+    setState(() {
+      userLocation = LatLng(position.latitude, position.longitude);
+    });
+  }
 
-    try {
-      Position pos = await Geolocator.getCurrentPosition(
-        // ignore: deprecated_member_use
-        desiredAccuracy: LocationAccuracy.high,
-      );
+  Future<void> _fetchProvinces() async {
+    final res = await http.get(Uri.parse('https://emsifa.github.io/api-wilayah-indonesia/api/provinces.json'));
+    if (res.statusCode == 200) {
       setState(() {
-        userLocation = LatLng(pos.latitude, pos.longitude);
-      });
-      print('Lokasi didapat: ${pos.latitude}, ${pos.longitude}');
-    } catch (e) {
-      setState(() {
-        catFact = 'Gagal mendapatkan lokasi: $e';
+        provinces = jsonDecode(res.body);
       });
     }
   }
 
-  Future<void> _getCatFact() async {
-    try {
-      final res = await http.get(Uri.parse('https://catfact.ninja/fact'));
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        setState(() {
-          catFact = data['fact'];
-        });
-      } else {
-        setState(() {
-          catFact = 'Gagal mengambil fakta kucing.';
-        });
-      }
-    } catch (e) {
+  Future<void> _fetchRegencies(String provinceId) async {
+    final res = await http.get(Uri.parse('https://emsifa.github.io/api-wilayah-indonesia/api/regencies/$provinceId.json'));
+    if (res.statusCode == 200) {
       setState(() {
-        catFact = 'Gagal mengambil fakta kucing: $e';
+        regencies = jsonDecode(res.body);
       });
     }
   }
@@ -96,53 +62,83 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Peta & Fakta Kucing')),
-      body:
-          userLocation == null
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                children: [
-                  Expanded(
-                    child: FlutterMap(
-                      options: MapOptions(
-                        initialCenter: userLocation!,
-                        initialZoom: 15,
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://sig.bps.go.id/rest-bridging/getwilayah?level=provinsi',
-                          userAgentPackageName: 'com.example.catmap_app',
-                        ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              width: 60,
-                              height: 60,
-                              point: userLocation!,
-                              child: const Icon(
-                                Icons.location_pin,
-                                color: Colors.red,
-                                size: 40,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    color: Colors.black87,
-                    width: double.infinity,
-                    child: Text(
-                      catFact ?? 'Mengambil fakta kucing...',
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
+      appBar: AppBar(title: const Text("Peta + Wilayah Indonesia")),
+      body: Column(
+        children: [
+          // Dropdown Provinsi
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: DropdownButtonFormField<String>(
+              decoration: const InputDecoration(labelText: "Pilih Provinsi"),
+              items: provinces.map<DropdownMenuItem<String>>((prov) {
+                return DropdownMenuItem(
+                  value: prov['id'],
+                  child: Text(prov['name']),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedProvinceId = value;
+                  selectedRegency = null;
+                  regencies = [];
+                });
+                if (value != null) _fetchRegencies(value);
+              },
+            ),
+          ),
+
+          // Dropdown Kabupaten
+          if (regencies.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: "Pilih Kabupaten"),
+                items: regencies.map<DropdownMenuItem<String>>((kab) {
+                  return DropdownMenuItem(
+                    value: kab['name'],
+                    child: Text(kab['name']),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedRegency = value;
+                  });
+                },
               ),
+            ),
+
+          const SizedBox(height: 10),
+
+          // Peta
+          Expanded(
+            child: userLocation == null
+                ? const Center(child: CircularProgressIndicator())
+                : FlutterMap(
+                    options: MapOptions(
+                      initialCenter: userLocation!,
+                      initialZoom: 13,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c'],
+                        userAgentPackageName: 'com.example.trenix',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: userLocation!,
+                            width: 60,
+                            height: 60,
+                            child: const Icon(Icons.location_pin, size: 40, color: Colors.red),
+                          )
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

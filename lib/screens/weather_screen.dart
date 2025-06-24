@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trenix/services/api/weather_api_service.dart'; // Pastikan path ini benar
+import '../services/api/weather_api_service.dart';
 
 class WeatherScreen extends StatefulWidget {
   const WeatherScreen({super.key});
@@ -46,34 +46,35 @@ class _WeatherScreenState extends State<WeatherScreen> {
           ? const Center(child: CircularProgressIndicator())
           : weatherData == null
               ? const Center(child: Text('Gagal memuat data cuaca.'))
-              : Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 30),
-                      const Icon(Icons.cloud, size: 100, color: Colors.blue),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Suhu: ${weatherData!['temperature']}°C',
-                        style: const TextStyle(fontSize: 26),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Kecepatan Angin: ${weatherData!['windspeed']} km/h',
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Waktu: ${weatherData!['time']}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 30),
-                      ElevatedButton(
-                        onPressed: fetchWeather,
-                        child: const Text('Refresh Cuaca'),
-                      ),
-                    ],
+              : Center( // Ini membungkus semua agar di tengah
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min, // Biar content di tengah
+                      children: [
+                        const Icon(Icons.cloud, size: 100, color: Colors.blue),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Suhu: ${weatherData!['temperature']}°C',
+                          style: const TextStyle(fontSize: 26),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Kecepatan Angin: ${weatherData!['windspeed']} km/h',
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Waktu: ${weatherData!['time']}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 30),
+                        ElevatedButton(
+                          onPressed: fetchWeather,
+                          child: const Text('Refresh Cuaca'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
     );
