@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 class Slide2 extends StatelessWidget {
   final VoidCallback onNext;
@@ -11,7 +12,17 @@ class Slide2 extends StatelessWidget {
     return Stack(
       children: [
         Positioned.fill(
-          child: Image.asset('assets/icons/onboarding2.jpg', fit: BoxFit.cover),
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              child: Lottie.asset(
+                'assets/icons/onboarding2.json',
+                repeat: true,
+              ),
+            ),
+          ),
         ),
 
         // ignore: deprecated_member_use

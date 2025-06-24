@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 class Slide3 extends StatelessWidget {
   final VoidCallback onGetStarted;
@@ -10,7 +11,17 @@ class Slide3 extends StatelessWidget {
     return Stack(
       children: [
         Positioned.fill(
-          child: Image.asset('assets/icons/onboarding3.jpg', fit: BoxFit.cover),
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              child: Lottie.asset(
+                'assets/icons/onboarding3.json',
+                repeat: true,
+              ),
+            ),
+          ),
         ),
 
         // ignore: deprecated_member_use
@@ -47,7 +58,7 @@ class Slide3 extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 const Text(
-                  'Real-time tracking,\nweather updates and full control.',
+                  'Stay on top of your tasks, \ncheck the weather, and take full control.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 25,
